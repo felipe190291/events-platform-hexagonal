@@ -1,0 +1,17 @@
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.db
+.sqlite
+mis_eventos.db
+test.db
+.env
+.git
+.gitignore
+docker-compose.yml
+Dockerfile
+.dockerignore
+README.md
