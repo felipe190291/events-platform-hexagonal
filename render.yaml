@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: mis-eventos-api
+    env: docker
+    plan: free
+    region: oregon # O la más cercana a ti
+    dockerContext: .
+    dockerfile: Dockerfile
+    healthCheckPath: /api/v1/events?page=1&limit=1
+    envVars:
+      - key: DATABASE_URL
+        sync: false # La pondrás manualmente desde el dashboard de Neon
+      - key: REDIS_URL
+        sync: false # La pondrás manualmente desde Upstash
+      - key: SECRET_KEY
+        generateValue: true # Render generará una segura por ti
+      - key: GROQ_API_KEY
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: PORT
+        value: 8000

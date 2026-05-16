@@ -17,4 +17,11 @@ python scripts/seed_events.py
 
 # 4. Iniciar la aplicación
 echo "✨ Iniciando servidor FastAPI..."
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+if [ "$ENVIRONMENT" = "production" ]; then
+    echo "🌐 Modo Producción (Gunicorn)"
+    # En Render free tier, usamos 2 workers para no exceder la RAM
+    exec gunicorn -w 2 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:$PORT
+else
+    echo "🛠 Modo Desarrollo (Uvicorn)"
+    exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+fi
