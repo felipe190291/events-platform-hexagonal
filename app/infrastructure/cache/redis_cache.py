@@ -24,7 +24,13 @@ class RedisCacheAdapter(CachePort):
             return value
 
     def set(self, key: str, value: Any, ttl: int = 60) -> None:
-        serialized = json.dumps(value)
+        import datetime
+        def json_serial(obj):
+            if isinstance(obj, (datetime.datetime, datetime.date)):
+                return obj.isoformat()
+            raise TypeError(f"Type {type(obj)} not serializable")
+            
+        serialized = json.dumps(value, default=json_serial)
         self._client.setex(key, ttl, serialized)
 
     def delete(self, key: str) -> None:

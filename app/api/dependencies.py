@@ -12,7 +12,7 @@ from app.infrastructure.database.repositories.user_repository import SQLModelUse
 from app.infrastructure.database.repositories.event_repository import SQLModelEventRepository
 from app.infrastructure.database.repositories.session_repository import SQLModelSessionRepository
 from app.infrastructure.database.repositories.attendee_repository import SQLModelAttendeeRepository
-from app.infrastructure.cache.memory_cache import InMemoryCacheAdapter
+from app.infrastructure.cache.redis_cache import RedisCacheAdapter
 from app.infrastructure.security.jwt_handler import decode_access_token
 from app.application.auth_service import AuthService
 from app.application.event_service import EventService
@@ -20,7 +20,7 @@ from app.application.session_service import SessionService
 from app.application.attendee_service import AttendeeService
 
 security = HTTPBearer()
-_cache = InMemoryCacheAdapter()
+_cache = RedisCacheAdapter()
 
 
 def get_cache():
@@ -47,9 +47,11 @@ def get_auth_service(user_repo: Annotated[SQLModelUserRepository, Depends(get_us
     return AuthService(user_repo)
 
 
+from app.domain.ports.cache_port import CachePort
+
 def get_event_service(
     event_repo: Annotated[SQLModelEventRepository, Depends(get_event_repo)],
-    cache: Annotated[InMemoryCacheAdapter, Depends(get_cache)],
+    cache: Annotated[CachePort, Depends(get_cache)],
 ) -> EventService:
     return EventService(event_repo, cache)
 

@@ -43,15 +43,40 @@ class EventService:
         page: int = 1,
         size: int = 10,
     ) -> tuple[list[EventEntity], int]:
-        """Search events with optional filters and pagination."""
+        """Search events with optional filters and pagination, using cache."""
+        # 1. Crear una clave única para esta búsqueda
+        cache_key = f"events:search:{query}:{status}:{organizer_id}:{page}:{size}"
+        
+        # 2. Intentar obtener los resultados desde la caché (Redis)
+        cached_result = self._cache.get(cache_key)
+        if cached_result:
+            print(f"🚀 [CACHE HIT] Resultados obtenidos desde Redis para {cache_key}")
+            # Reconstruir las entidades desde el diccionario cacheado
+            events = [EventEntity(**e) for e in cached_result["events"]]
+            return events, cached_result["total"]
+            
+        print(f"🐢 [CACHE MISS] Consultando base de datos PostgreSQL para {cache_key}")
+        # 3. Si no está en caché, consultar la Base de Datos
         skip = (page - 1) * size
-        return self._event_repo.search(
+        events, total = self._event_repo.search(
             query=query, 
             status=status, 
             organizer_id=organizer_id, 
             skip=skip, 
             limit=size
         )
+        
+        # 4. Guardar en caché para futuras consultas (expira en 60 segundos)
+        self._cache.set(
+            cache_key, 
+            {
+                "events": [e.model_dump(mode="json") for e in events],
+                "total": total
+            },
+            ttl=60
+        )
+        
+        return events, total
 
     def update_event(
         self, event_id: int, event_data: dict, user_id: int, user_role: UserRole
